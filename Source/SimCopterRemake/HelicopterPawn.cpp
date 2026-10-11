@@ -17,42 +17,30 @@ AHelicopterPawn::AHelicopterPawn()
     AutoPossessPlayer = EAutoReceiveInput::Player0;
 
     Collision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Collision"));
-    Collision->InitCapsuleSize(115.0f, 95.0f);
+    Collision->InitCapsuleSize(180.0f, 230.0f);
     Collision->SetCollisionProfileName(UCollisionProfile::Pawn_ProfileName);
     RootComponent = Collision;
 
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(
-        TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(
-        TEXT("/Engine/BasicShapes/Cube.Cube"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> Bell212Mesh(
+        TEXT("/Game/Original/Models/BELL212.BELL212"));
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> BellRotorMesh(
+        TEXT("/Game/Original/Models/BELLROTR.BELLROTR"));
 
     Body = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Body"));
     Body->SetupAttachment(RootComponent);
-    Body->SetStaticMesh(CylinderMesh.Object);
-    Body->SetRelativeRotation(FRotator(0.0f, 90.0f, 90.0f));
-    Body->SetRelativeScale3D(FVector(1.15f, 0.75f, 0.75f));
+    if (Bell212Mesh.Succeeded())
+    {
+        Body->SetStaticMesh(Bell212Mesh.Object);
+    }
     Body->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-    TailBoom = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TailBoom"));
-    TailBoom->SetupAttachment(Body);
-    TailBoom->SetStaticMesh(CubeMesh.Object);
-    TailBoom->SetRelativeLocation(FVector(-115.0f, 0.0f, 12.0f));
-    TailBoom->SetRelativeScale3D(FVector(1.45f, 0.11f, 0.11f));
-    TailBoom->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     MainRotor = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainRotor"));
     MainRotor->SetupAttachment(Body);
-    MainRotor->SetStaticMesh(CubeMesh.Object);
-    MainRotor->SetRelativeLocation(FVector(0.0f, 0.0f, 92.0f));
-    MainRotor->SetRelativeScale3D(FVector(0.06f, 2.9f, 0.025f));
+    if (BellRotorMesh.Succeeded())
+    {
+        MainRotor->SetStaticMesh(BellRotorMesh.Object);
+    }
     MainRotor->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-    TailRotor = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TailRotor"));
-    TailRotor->SetupAttachment(Body);
-    TailRotor->SetStaticMesh(CubeMesh.Object);
-    TailRotor->SetRelativeLocation(FVector(-255.0f, -12.0f, 22.0f));
-    TailRotor->SetRelativeScale3D(FVector(0.03f, 0.035f, 0.58f));
-    TailRotor->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
@@ -112,12 +100,11 @@ void AHelicopterPawn::Tick(float DeltaSeconds)
         RollInput * Tuning.MaxVisualRoll);
     Body->SetRelativeRotation(FMath::RInterpTo(
         Body->GetRelativeRotation(),
-        FRotator(0.0f, 90.0f, 90.0f) + VisualTilt,
+        VisualTilt,
         DeltaSeconds,
         4.0f));
 
-    MainRotor->AddLocalRotation(FRotator(0.0f, 0.0f, 1440.0f * DeltaSeconds));
-    TailRotor->AddLocalRotation(FRotator(1440.0f * DeltaSeconds, 0.0f, 0.0f));
+    MainRotor->AddLocalRotation(FRotator(0.0f, 1440.0f * DeltaSeconds, 0.0f));
 
     FHitResult GroundHit;
     const FVector TraceStart = GetActorLocation();

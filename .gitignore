@@ -11,6 +11,7 @@ ReverseEngineering/ghidra-projects/
 ReverseEngineering/reports/*
 !ReverseEngineering/reports/architecture.md
 !ReverseEngineering/reports/disc-inventory.md
+!ReverseEngineering/reports/sim3d-model-format.md
 *.iso
 *.nrg
 

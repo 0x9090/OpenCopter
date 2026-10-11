@@ -65,13 +65,7 @@ protected:
     TObjectPtr<UStaticMeshComponent> Body;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<UStaticMeshComponent> TailBoom;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<UStaticMeshComponent> MainRotor;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<UStaticMeshComponent> TailRotor;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<USpringArmComponent> CameraBoom;

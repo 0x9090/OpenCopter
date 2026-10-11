@@ -27,5 +27,5 @@ private:
     TObjectPtr<UStaticMeshComponent> Ground;
 
     UPROPERTY(VisibleAnywhere)
-    TObjectPtr<UInstancedStaticMeshComponent> Buildings;
+    TArray<TObjectPtr<UInstancedStaticMeshComponent>> BuildingSets;
 };
