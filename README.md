@@ -8,9 +8,9 @@ disc image.
 
 Open `SimCopterRemake.uproject` in Unreal Engine 5.8 and press Play. The game
 starts in `/Game/Maps/SimCopterCity` and creates the city, helicopter, lighting,
-HUD, and dispatch system at runtime. It opens on a reconstructed title screen
-using the original SimCopter menu and hangar art. Start Career, Free Flight,
-Load Game, Controls, and Quit are available from that screen.
+HUD, and dispatch system at runtime. It opens on the original 640x480 menu
+composition recovered from `menusky.smk` and `main1.bmp` through `main5.bmp`.
+New/Open Career, New/Open User Game, and Quit are available from that screen.
 
 Controls:
 
@@ -29,8 +29,11 @@ textures, plus selected rotor/mission/menu audio from the authorized disc image
 into `/Game/Original`. The helicopter body and rotor are the original `BELL212`
 and `BELLROTR` meshes decoded from `SIM3D2.MAX`. The generated city now places
 eight original structure and landmark meshes decoded from `SIM3D1.MAX` and
-`SIM3D3.MAX`, with their archive palette materials. The HUD reconstructs the
-original cockpit frame around the modern mission readout.
+`SIM3D3.MAX`, with their archive palette materials. Those palette bytes are
+converted from sRGB to Unreal linear color and rendered with a rough,
+directionally lit surface, retaining the source model definition without the
+former missing-material silhouettes. The HUD uses
+the original dashboard pieces at their recovered 640x480 screen coordinates.
 
 To reproduce the recovered model assets after refreshing the disc extraction:
 

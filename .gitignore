@@ -11,7 +11,9 @@ ReverseEngineering/ghidra-projects/
 ReverseEngineering/reports/*
 !ReverseEngineering/reports/architecture.md
 !ReverseEngineering/reports/disc-inventory.md
+!ReverseEngineering/reports/original-menusky.png
 !ReverseEngineering/reports/sim3d-model-format.md
+!ReverseEngineering/reports/visual-comparison.md
 *.iso
 *.nrg
 

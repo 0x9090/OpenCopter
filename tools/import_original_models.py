@@ -10,41 +10,70 @@ ROOT = os.path.dirname(unreal.Paths.get_project_file_path())
 SOURCE_DIR = os.path.join(ROOT, "Intermediate", "RecoveredModels")
 MANIFEST_PATH = os.path.join(SOURCE_DIR, "manifest.json")
 DESTINATION = "/Game/Original/Models"
+PALETTE_MATERIALS = {}
+
+
+def srgb_byte_to_linear(value):
+    channel = value / 255.0
+    if channel <= 0.04045:
+        return channel / 12.92
+    return ((channel + 0.055) / 1.055) ** 2.4
 
 
 def make_palette_material(archive_name, palette_index, rgb):
     archive_stem = os.path.splitext(archive_name)[0].upper()
     asset_name = f"M_{archive_stem}_Palette_{palette_index}"
     asset_path = f"{DESTINATION}/{asset_name}"
-    material = unreal.load_asset(asset_path)
-    if not isinstance(material, unreal.Material):
-        material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-            asset_name,
-            DESTINATION,
-            unreal.Material,
-            unreal.MaterialFactoryNew(),
+    if asset_path in PALETTE_MATERIALS:
+        return PALETTE_MATERIALS[asset_path]
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+        unreal.EditorAssetLibrary.delete_asset(asset_path)
+    material = unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        asset_name,
+        DESTINATION,
+        unreal.Material,
+        unreal.MaterialFactoryNew(),
+    )
+    is_color_key = archive_stem == "SIM3D2" and palette_index == "006"
+    if is_color_key:
+        # BELLROTR's 0x0002 faces use the archive's green key (index 6) for
+        # the spinning-disc interior. The original renderer discarded the
+        # key; drawing it opaque creates a fluorescent disk above the Bell.
+        material.set_editor_property("blend_mode", unreal.BlendMode.BLEND_TRANSLUCENT)
+        opacity = unreal.MaterialEditingLibrary.create_material_expression(
+            material, unreal.MaterialExpressionConstant, -300, 260
         )
-        color = unreal.MaterialEditingLibrary.create_material_expression(
-            material, unreal.MaterialExpressionConstant3Vector, -300, 0
-        )
-        color.set_editor_property(
-            "constant",
-            unreal.LinearColor(rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0, 1.0),
-        )
+        opacity.set_editor_property("r", 0.0)
         unreal.MaterialEditingLibrary.connect_material_property(
-            color, "", unreal.MaterialProperty.MP_BASE_COLOR
+            opacity, "", unreal.MaterialProperty.MP_OPACITY
         )
-        roughness = unreal.MaterialEditingLibrary.create_material_expression(
-            material, unreal.MaterialExpressionConstant, -300, 180
-        )
-        roughness.set_editor_property("r", 0.78)
-        unreal.MaterialEditingLibrary.connect_material_property(
-            roughness, "", unreal.MaterialProperty.MP_ROUGHNESS
-        )
+    color = unreal.MaterialEditingLibrary.create_material_expression(
+        material, unreal.MaterialExpressionConstant3Vector, -300, 0
+    )
+    color.set_editor_property(
+        "constant",
+        unreal.LinearColor(
+            srgb_byte_to_linear(rgb[0]),
+            srgb_byte_to_linear(rgb[1]),
+            srgb_byte_to_linear(rgb[2]),
+            1.0,
+        ),
+    )
+    unreal.MaterialEditingLibrary.connect_material_property(
+        color, "", unreal.MaterialProperty.MP_BASE_COLOR
+    )
+    roughness = unreal.MaterialEditingLibrary.create_material_expression(
+        material, unreal.MaterialExpressionConstant, -300, 140
+    )
+    roughness.set_editor_property("r", 0.88)
+    unreal.MaterialEditingLibrary.connect_material_property(
+        roughness, "", unreal.MaterialProperty.MP_ROUGHNESS
+    )
 
     material.set_editor_property("used_with_instanced_static_meshes", True)
     unreal.MaterialEditingLibrary.recompile_material(material)
     unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False)
+    PALETTE_MATERIALS[asset_path] = material
     return material
 
 
@@ -135,8 +164,32 @@ for asset_path in sorted(generated_instances):
         "/Original/Models/" in asset_path
         and "_Palette_" in asset_path
         and not asset_name.startswith("M_")
+        and unreal.EditorAssetLibrary.does_asset_exist(asset_path)
     ):
         unreal.EditorAssetLibrary.delete_asset(asset_path)
+
+# Interchange can finish replacing its generated material instances at the end
+# of an import task. Re-apply the project-owned palette materials after those
+# temporary assets are gone so the saved mesh never retains a stale instance
+# reference (which renders black when the instance package is deleted).
+for item in manifest:
+    mesh_path = f"{DESTINATION}/{item['name']}"
+    mesh = unreal.load_asset(mesh_path)
+    for slot_index, static_material in enumerate(
+        mesh.get_editor_property("static_materials")
+    ):
+        slot_name = str(static_material.get_editor_property("material_slot_name"))
+        match = re.search(r"_Palette_(\d{3})$", slot_name)
+        if not match:
+            raise RuntimeError(f"Unexpected recovered material slot: {slot_name}")
+        palette_index = match.group(1)
+        mesh.set_material(
+            slot_index,
+            make_palette_material(
+                item["archive"], palette_index, item["palette"][palette_index]
+            ),
+        )
+    unreal.EditorAssetLibrary.save_loaded_asset(mesh, only_if_is_dirty=False)
 
 unreal.EditorAssetLibrary.save_directory(
     DESTINATION, only_if_is_dirty=False, recursive=True

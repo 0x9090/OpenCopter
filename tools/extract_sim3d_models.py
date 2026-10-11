@@ -259,8 +259,16 @@ def main() -> None:
     requested = {name.upper() for name in args.models}
     manifest = []
     found = set()
+    master_palette = None
     for archive_path in args.archives:
         archive = Sim3DArchive(archive_path)
+        # SIM3D1 carries the master game palette. Later archives have an
+        # archive-specific color-key value in entry zero; using it as a surface
+        # color turns the Bell 212 nose magenta instead of the original grey.
+        if master_palette is None:
+            master_palette = archive.palette
+        else:
+            archive.palette = master_palette
         names = [
             name
             for name, entry in archive.entries.items()

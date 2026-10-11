@@ -4,6 +4,7 @@
 #include "Components/SkyLightComponent.h"
 #include "Engine/DirectionalLight.h"
 #include "Engine/SkyLight.h"
+#include "Components/SkyAtmosphereComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "HelicopterPawn.h"
@@ -27,8 +28,15 @@ void ASimCopterGameMode::BeginPlay()
         FVector(0.0f, 0.0f, 5000.0f), FRotator(-48.0f, -28.0f, 0.0f));
     if (Sun)
     {
-        Sun->GetLightComponent()->SetIntensity(8.0f);
+        Sun->GetLightComponent()->SetIntensity(10.0f);
+        if (UDirectionalLightComponent* SunComponent =
+                Cast<UDirectionalLightComponent>(Sun->GetLightComponent()))
+        {
+            SunComponent->SetAtmosphereSunLight(true);
+        }
     }
+
+    GetWorld()->SpawnActor<ASkyAtmosphere>(FVector::ZeroVector, FRotator::ZeroRotator);
 
     ASkyLight* Sky = GetWorld()->SpawnActor<ASkyLight>(FVector::ZeroVector, FRotator::ZeroRotator);
     if (Sky)

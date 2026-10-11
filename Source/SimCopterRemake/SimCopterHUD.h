@@ -50,6 +50,10 @@ private:
     void SetStatus(const FString& Message);
 
     UPROPERTY() TObjectPtr<UMaterialInterface> MainMenuMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInterface> MenuSkyMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInterface> MainMenuCapMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInterface> MainMenuPipeMaterial;
+    UPROPERTY() TObjectPtr<UMaterialInterface> MainMenuLightsMaterial;
     UPROPERTY() TObjectPtr<UMaterialInterface> PlayMenuMaterial;
     UPROPERTY() TObjectPtr<UMaterialInterface> HangarDayMaterial;
     UPROPERTY() TObjectPtr<UMaterialInterface> HangarNightMaterial;

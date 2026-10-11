@@ -27,9 +27,40 @@ mesh. Coordinates are converted from Maxis X-right/Y-up/Z-forward into Unreal
 X-forward/Y-right/Z-up and scaled at 40 cm per source unit. This makes the
 recovered Bell 212 approximately 17.7 metres long.
 
-Faces with ordinary material IDs use `CMAP` directly. Faces carrying flag
-`0x2000` address the separate bitmap resource; until that texture container is
-fully decoded, the exporter assigns the archive's neutral palette entry 48.
+The face-material binder at `0x004721a0` consumes the FACE flags and material
+field. The recovered Bell body uses palette/shading face types (`0x0003` and
+`0x4002`), not bitmap-mapped faces. Its visible materials therefore come from
+`CMAP`; an absent `SIM3D.BMP` binding is not the cause of a black Bell. The
+runtime importer creates rough base-color materials, converts the palette's
+sRGB bytes to linear color, and rebinds every mesh after Interchange cleanup so stale deleted
+material-instance references cannot turn the models black.
+
+`SIM3D1.MAX` supplies the master palette used by the game. Entries other than
+zero agree across all three archives; later archives store archive-specific
+key colors in entry zero. Retaining those later zero values makes the Bell's
+neutral shell magenta, so the exporter uses SIM3D1's entry zero for every
+archive.
+
+The `BELLROTR` spinning-disc interior uses material 6 on `0x0002` faces. Its
+bright green palette value is a transparency key, not an opaque rotor color;
+the Unreal material discards it while retaining the separately modeled rotor
+rim.
+
+## SIM3D.BMP texture container
+
+`SIM3D.BMP` is a proprietary indexed-bitmap archive, not a Windows bitmap.
+`InitializeGameResources` (`0x0047de90`) loads it with resource type 3 and
+`0x0046f4b0` decodes its 68 entries. The file starts with four 32-bit values
+(`file size`, zero, entry count, entry count), followed by 68 twelve-byte
+directory records. Each sequential image record contains:
+
+- width, height, and a reserved 32-bit value;
+- one 32-bit row offset per scanline;
+- width x height indexed pixels.
+
+The record length is `12 + (width + 4) * height`. This decode is retained for
+future texture-mapped models, but Ghidra and the FACE records confirm the Bell
+212 itself is palette-shaded.
 
 ## Imported original models
 

@@ -44,7 +44,10 @@ AHelicopterPawn::AHelicopterPawn()
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-    CameraBoom->TargetArmLength = 950.0f;
+    // The recovered Bell 212 is full scale (roughly 17.7 m long), so the
+    // original placeholder arm put the camera inside its tail boom.
+    CameraBoom->TargetArmLength = 3000.0f;
+    CameraBoom->SocketOffset = FVector(0.0f, 0.0f, 350.0f);
     CameraBoom->SetRelativeRotation(FRotator(-14.0f, 0.0f, 0.0f));
     CameraBoom->bEnableCameraLag = true;
     CameraBoom->CameraLagSpeed = 4.0f;

@@ -27,6 +27,13 @@ def import_asset(source, destination_path, destination_name):
     return task.imported_object_paths[0]
 
 
+def ensure_asset(source, destination_path, destination_name):
+    asset_path = f"{destination_path}/{destination_name}"
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path):
+        return asset_path
+    return import_asset(source, destination_path, destination_name)
+
+
 def replace_material(name):
     path = f"/Game/Original/Materials/{name}"
     if unreal.EditorAssetLibrary.does_asset_exist(path):
@@ -59,6 +66,13 @@ def make_textured_material(name, texture_path, uv_scale=1.0):
 
     unreal.MaterialEditingLibrary.connect_material_property(
         sample, "RGB", unreal.MaterialProperty.MP_BASE_COLOR
+    )
+    roughness = unreal.MaterialEditingLibrary.create_material_expression(
+        material, unreal.MaterialExpressionConstant, -100, 160
+    )
+    roughness.set_editor_property("r", 0.9)
+    unreal.MaterialEditingLibrary.connect_material_property(
+        roughness, "", unreal.MaterialProperty.MP_ROUGHNESS
     )
     unreal.MaterialEditingLibrary.recompile_material(material)
     unreal.EditorAssetLibrary.save_loaded_asset(material, only_if_is_dirty=False)
@@ -114,19 +128,19 @@ unreal.EditorAssetLibrary.make_directory("/Game/Original/UI")
 unreal.EditorAssetLibrary.make_directory("/Game/Original/World")
 unreal.EditorAssetLibrary.make_directory("/Game/Original/Materials")
 
-import_asset(
+ensure_asset(
     os.path.join(DISC, "sound", "COPLOOP.WAV"),
     "/Game/Original/Audio",
     "S_RotorLoop",
 )
-import_asset(os.path.join(DISC, "sound", "menu.wav"), "/Game/Original/Audio", "S_MenuSelect")
-import_asset(os.path.join(DISC, "sound", "menuback.wav"), "/Game/Original/Audio", "S_MenuBack")
-import_asset(
+ensure_asset(os.path.join(DISC, "sound", "menu.wav"), "/Game/Original/Audio", "S_MenuSelect")
+ensure_asset(os.path.join(DISC, "sound", "menuback.wav"), "/Game/Original/Audio", "S_MenuBack")
+ensure_asset(
     os.path.join(DISC, "sound", "CHOPSTAR.WAV"),
     "/Game/Original/Audio",
     "S_RotorStart",
 )
-import_asset(
+ensure_asset(
     os.path.join(DISC, "sound", "CA_CHING.WAV"),
     "/Game/Original/Audio",
     "S_MissionComplete",
@@ -138,7 +152,12 @@ import_asset(
 )
 
 ui_assets = {
+    "T_MenuSky": os.path.join(REPORTS, "original-menusky.png"),
     "T_MainMenu": "main1.bmp",
+    "T_MainMenuCap": "main2.bmp",
+    "T_MainMenuPipe": "main3.bmp",
+    "T_MainMenuLights": "main4.bmp",
+    "T_MainMenuEnvelopes": "main5.bmp",
     "T_PlayMenu": "playmenu.bmp",
     "T_HangarDay": "nhangar.bmp",
     "T_HangarNight": "dhangar.bmp",
@@ -151,7 +170,8 @@ ui_assets = {
     "T_Bell212": "cat_bell.bmp",
 }
 for asset_name, filename in ui_assets.items():
-    import_asset(os.path.join(DISC, "bmp", filename), "/Game/Original/UI", asset_name)
+    source = filename if os.path.isabs(filename) else os.path.join(DISC, "bmp", filename)
+    import_asset(source, "/Game/Original/UI", asset_name)
 
 import_asset(
     os.path.join(DISC, "bmp", "bldghitx.bmp"),
@@ -179,5 +199,12 @@ make_color_key_ui_material(
     "M_DashboardLower", "/Game/Original/UI/T_OriginalDashboard"
 )
 
-unreal.EditorAssetLibrary.save_directory("/Game/Original", only_if_is_dirty=False, recursive=True)
+for asset_directory in (
+    "/Game/Original/UI",
+    "/Game/Original/World",
+    "/Game/Original/Materials",
+):
+    unreal.EditorAssetLibrary.save_directory(
+        asset_directory, only_if_is_dirty=False, recursive=True
+    )
 unreal.log("SIMCOPTER_ORIGINAL_ASSET_IMPORT_COMPLETE")
