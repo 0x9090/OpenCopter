@@ -1,0 +1,17 @@
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Local reverse-engineering inputs and generated tool state. The compact reports
+# and scripts under ReverseEngineering remain versioned.
+.ghidra-profile/
+ReverseEngineering/disc/
+ReverseEngineering/ghidra-projects/
+ReverseEngineering/reports/*
+!ReverseEngineering/reports/architecture.md
+!ReverseEngineering/reports/disc-inventory.md
+*.iso
+*.nrg
+
+.DS_Store
